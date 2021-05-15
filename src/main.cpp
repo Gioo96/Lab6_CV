@@ -30,7 +30,6 @@ int main(int argc, const char * argv[]) {
     // Load dataset and video frames
     String dataset_path = "/Users/gioel/Documents/Control\ System\ Engineering/Computer\ Vision/Lab_6/data/objects/*.png";
     Tracker track(frames, dataset_path);
-    cout<<"Hey there"<<endl;
     
     return 0;
 }
