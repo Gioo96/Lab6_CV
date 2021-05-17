@@ -18,7 +18,10 @@ public:
     Tracker(vector<Mat> images_f, String dataset_path);
     
     // Match objects
-    void match(vector<vector<KeyPoint>> &list_keypoints_dataset, vector<Mat> &list_descriptors_dataset, vector<KeyPoint> &keypoints_frame, Mat &descriptors_frame);
+    void match(vector<vector<KeyPoint>> &list_keypoints_dataset, vector<Mat> &list_descriptors_dataset, vector<KeyPoint> &keypoints_frame, Mat &descriptors_frame, double ratio);
+    
+    // adsada
+    vector<vector<KeyPoint>> a(vector<vector<DMatch>> allgood_matches, vector<vector<KeyPoint>> all_keypoints);
 
 // Data
 
