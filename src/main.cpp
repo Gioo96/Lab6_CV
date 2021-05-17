@@ -31,5 +31,7 @@ int main(int argc, const char * argv[]) {
     String dataset_path = "/Users/gioel/Documents/Control\ System\ Engineering/Computer\ Vision/Lab_6/data/objects/*.png";
     Tracker track(frames, dataset_path);
     
+    cout<<"Test"<<endl;
+    
     return 0;
 }
