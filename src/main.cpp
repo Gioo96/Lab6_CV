@@ -32,7 +32,6 @@ int main(int argc, const char * argv[]) {
     Tracker track(frames, dataset_path);
     
     cout<<"Test"<<endl;
-    cout<<"Test11"<<endl;
     
     return 0;
 }
