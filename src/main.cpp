@@ -18,6 +18,7 @@ int main(int argc, const char * argv[]) {
                 cout<< "Blank frame grabbed\n";
                 break;
             }
+            
             frames.push_back(frame);
         }
     }
@@ -29,13 +30,14 @@ int main(int argc, const char * argv[]) {
 
     // Load dataset and video frames
     String dataset_path = "/Users/gioel/Documents/Control\ System\ Engineering/Computer\ Vision/Lab_6/data/objects/*.png";
-    Tracker track(frames, dataset_path);
-
+    Tracking track(frames, dataset_path);
+    
     vector<vector<KeyPoint>> list_keypoints_dataset;
     vector<Mat> list_descriptors_dataset;
     vector<KeyPoint> keypoints_frame;
     Mat descriptors_frame;
-    track.match(list_keypoints_dataset, list_descriptors_dataset, keypoints_frame, descriptors_frame, 3);
+    vector<vector<KeyPoint>> allgood_keypoints;
+    allgood_keypoints = track.match(list_keypoints_dataset, list_descriptors_dataset, keypoints_frame, descriptors_frame, 3);
     
     
     return 0;
