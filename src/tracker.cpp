@@ -26,7 +26,7 @@ Tracking::Tracking(vector<Mat> images_f, String dataset_path) {
     }
 }
 
-vector<vector<KeyPoint>> Tracking::getGoodKeypoints(vector<vector<KeyPoint>> &list_keypoints_dataset, vector<Mat> &list_descriptors_dataset, vector<KeyPoint> &keypoints_frame, Mat &descriptors_frame, double ratio) {
+void Tracking::visualizeGoodKeypoints(vector<vector<KeyPoint>> &list_keypoints_dataset, vector<Mat> &list_descriptors_dataset, vector<KeyPoint> &keypoints_frame, Mat &descriptors_frame, vector<Mat> &H) {
     
     // COMPUTE KEYPOINTS & DESCRIPTORS
     Ptr<SIFT> sift = SIFT::create();
@@ -68,7 +68,7 @@ vector<vector<KeyPoint>> Tracking::getGoodKeypoints(vector<vector<KeyPoint>> &li
         vector<DMatch> refined_matches;
         for (int j = 0; j < matches.size(); j++) {
 
-            if (matches.at(j).distance < ratio * min_distance) {
+            if (matches.at(j).distance < 3 * min_distance) {
 
                 refined_matches.push_back(matches.at(j));
             }
@@ -85,16 +85,9 @@ vector<vector<KeyPoint>> Tracking::getGoodKeypoints(vector<vector<KeyPoint>> &li
             dst.push_back(list_keypoints_dataset.at(i).at(refined_matches.at(j).trainIdx).pt);
         }
         
-        try {
-            findHomography(src, dst, mask, RANSAC);
-            if (refined_matches.size() < 4) {
-                throw "Not enough matches have been found!";
-            }
-        }
-        catch (const char* msg) {
-            
-            cout<<msg<<endl;
-        }
+        Mat H_single;
+        H_single = findHomography(src, dst, mask, RANSAC);
+        H.push_back(H_single);
 
         vector<DMatch> good_matches;
         for (int j=0; j<mask.size(); j++) {
@@ -115,7 +108,15 @@ vector<vector<KeyPoint>> Tracking::getGoodKeypoints(vector<vector<KeyPoint>> &li
         allgood_keypoints.push_back(good_keypoints);
         
     }
-    return allgood_keypoints;
+    // Visualize good keypoints
+    vector<Scalar> color = {Scalar(0,0,255), Scalar(255,0,0), Scalar(0,255,0), Scalar(50,50,50)};
+    Mat img_keypoints = images_frame.at(0);
+    for (int i=0; i<images_dataset.size(); i++) {
+        
+        drawKeypoints(img_keypoints, allgood_keypoints.at(i), img_keypoints, color.at(i));
+    }
+    imshow("Good keypoints", img_keypoints);
+    waitKey(0);
 }
 
 vector<vector<KeyPoint>> Tracking::visualize_matches(vector<vector<DMatch>> allgood_matches, vector<vector<KeyPoint>> list_keypoints_dataset, vector<KeyPoint> keypoints_frame) {

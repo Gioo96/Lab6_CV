@@ -29,25 +29,40 @@ int main(int argc, const char * argv[]) {
     }
 
     // Load dataset and video frames
-    String dataset_path = "/Users/gioel/Documents/Control\ System\ Engineering/Computer\ Vision/Lab_6/data/objects/*.png";
+    String dataset_path = "/Users/gioel/Documents/Control System Engineering/Computer Vision/Lab_6/data/objects/*.png";
     Tracking track(frames, dataset_path);
     
     vector<vector<KeyPoint>> list_keypoints_dataset;
     vector<Mat> list_descriptors_dataset;
     vector<KeyPoint> keypoints_frame;
     Mat descriptors_frame;
-    vector<vector<KeyPoint>> allgood_keypoints;
-    allgood_keypoints = track.getGoodKeypoints(list_keypoints_dataset, list_descriptors_dataset, keypoints_frame, descriptors_frame, 3);
+    vector<Mat> H;
+    track.visualizeGoodKeypoints(list_keypoints_dataset, list_descriptors_dataset, keypoints_frame, descriptors_frame, H);
     
-    // Visualize good keypoints
-    vector<Scalar> color = {Scalar(0,0,255), Scalar(255,0,0), Scalar(0,255,0), Scalar(50,50,50)};
-    Mat img_keypoints = track.images_frame.at(0);
-    for (int i=0; i<track.images_dataset.size(); i++) {
-        
-        drawKeypoints(img_keypoints, allgood_keypoints.at(i), img_keypoints, color.at(i));
-    }
-    imshow("Good keypoints", img_keypoints);
-    waitKey(0);
     
+    vector<Point2f> obj_corners(4);
+
+    obj_corners[0] = Point2f(0, 0);
+    obj_corners[1] = Point2f((float)track.images_dataset.at(0).cols, 0);
+    obj_corners[2] = Point2f((float)track.images_dataset.at(0).cols, (float)track.images_dataset.at(0).rows);
+    obj_corners[3] = Point2f(0, (float)track.images_dataset.at(0).rows);
+    vector<Point2f> scene_corners(4);
+
+    cout << "That's OK" << endl;
+
+    //perspectiveTransform(obj_corners, scene_corners, H);
+
+//    line( track.images_frame.at(0), scene_corners[0] + Point2f((float)images_dataset.at(i).cols, 0),
+//          scene_corners[1] + Point2f((float)images_dataset.at(i).cols, 0), Scalar(0, 255, 0), 4 );
+//    line( img_matches.at(i), scene_corners[1] + Point2f((float)images_dataset.at(i).cols, 0),
+//          scene_corners[2] + Point2f((float)images_dataset.at(i).cols, 0), Scalar( 0, 255, 0), 4 );
+//    line( img_matches.at(i), scene_corners[2] + Point2f((float)images_dataset.at(i).cols, 0),
+//          scene_corners[3] + Point2f((float)images_dataset.at(i).cols, 0), Scalar( 0, 255, 0), 4 );
+//    line( img_matches.at(i), scene_corners[3] + Point2f((float)images_dataset.at(i).cols, 0),
+//          scene_corners[0] + Point2f((float)images_dataset.at(i).cols, 0), Scalar( 0, 255, 0), 4 );
+//
+//    imshow("Good Matches & Object detection of image "+to_string(i), img_matches.at(i));
+//    waitKey(0);
+//
     return 0;
 }
