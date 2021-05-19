@@ -18,15 +18,15 @@ public:
     // Constructor
     Tracking(vector<Mat> images_f, String dataset_path);
     
-    // Match objects
+    // Visualize good keypoints
     void visualizeGoodKeypoints(vector<vector<KeyPoint>> &list_keypoints_dataset, vector<Mat> &list_descriptors_dataset, vector<KeyPoint> &keypoints_frame, Mat &descriptors_frame, vector<Mat> &H);
     
-    // adsada
-    vector<vector<KeyPoint>> visualize_matches(vector<vector<DMatch>> allgood_matches, vector<vector<KeyPoint>> list_keypoints_dataset, vector<KeyPoint> keypoints_frame);
+    // Draw the rectangle
+    void drawRect(vector<Mat> H);
 
 // Data
 
-public:
+protected:
 
     // Vector of images of the given video
     vector<Mat> images_frame;
