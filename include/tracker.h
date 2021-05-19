@@ -2,6 +2,8 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/xfeatures2d.hpp>
+#include <opencv2/features2d.hpp>
+#include <opencv2/calib3d.hpp>
 #include <iostream>
 
 using namespace cv;
@@ -21,7 +23,7 @@ public:
     void match(vector<vector<KeyPoint>> &list_keypoints_dataset, vector<Mat> &list_descriptors_dataset, vector<KeyPoint> &keypoints_frame, Mat &descriptors_frame, double ratio);
     
     // adsada
-    vector<vector<KeyPoint>> a(vector<vector<DMatch>> allgood_matches, vector<vector<KeyPoint>> all_keypoints);
+    vector<vector<KeyPoint>> findGoodKeyPoints(vector<vector<DMatch>> allgood_matches, vector<vector<KeyPoint>> all_keypoints, vector<KeyPoint> keypoints_frame);
 
 // Data
 

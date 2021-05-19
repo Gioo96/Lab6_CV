@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.20.0)
 project(Lab_6)
 
 find_package(OpenCV REQUIRED)

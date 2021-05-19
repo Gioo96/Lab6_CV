@@ -23,7 +23,7 @@ Tracker::Tracker(vector<Mat> images_f, String dataset_path) {
         for (size_t i = 0; i < count; i++) {
             
             images_dataset.push_back(imread(fn[i], IMREAD_COLOR));
-            resize(images_dataset.at(i),images_dataset.at(i) ,size);
+            //resize(images_dataset.at(i),images_dataset.at(i) ,size);
         }
     }
 }
@@ -33,6 +33,11 @@ void Tracker::match(vector<vector<KeyPoint>> &list_keypoints_dataset, vector<Mat
     // COMPUTE KEYPOINTS & DESCRIPTORS
     Ptr<SIFT> sift = SIFT::create();
     
+    Scalar color;
+    std::vector<Point2f> obj_corners(4);
+    std::vector<Point2f> scene_corners(4);
+    
+    vector<Mat> img_dataset_keypoints(images_dataset.size());
     // Keypoints & descriptors foreach image of the dataset
     for (size_t i = 0; i < images_dataset.size(); i ++) {
         
@@ -41,19 +46,70 @@ void Tracker::match(vector<vector<KeyPoint>> &list_keypoints_dataset, vector<Mat
         sift->detectAndCompute(images_dataset.at(i), Mat(), keypoints_d, descriptors_d);
         list_keypoints_dataset.push_back(keypoints_d);
         list_descriptors_dataset.push_back(descriptors_d);
+        
+        // Show the keypoints figured out for each dataset image
+        img_dataset_keypoints.at(i) = images_dataset.at(i).clone();
+        
+        // Set different color for each object
+        if (i==0){
+            
+            color = Scalar(255,0,0);
+        }
+        if (i==1){
+            
+            color = Scalar(0,255,0);
+        }
+        if (i==2){
+            
+            color = Scalar(0,0,255);
+        }
+        if (i==3){
+            
+            color = Scalar(0,255,255);
+        }
+        
+        drawKeypoints(images_dataset.at(i), keypoints_d, img_dataset_keypoints.at(i), color);
+        string string_image = "Keypoints of dataset image "+to_string(i);
+        imshow(string_image, img_dataset_keypoints.at(i));
+        waitKey(0);
     }
     
+    
     // Keypoints & descriptors of the first video frame
+    Mat first_image_frame_keypoints = images_frame.at(0).clone();
     sift->detectAndCompute(images_frame.at(0), Mat(), keypoints_frame, descriptors_frame);
+    
+    // Show the keypoints figured out in the first frame
+    drawKeypoints(images_frame.at(0), keypoints_frame, first_image_frame_keypoints, Scalar(0,255,0));
+    cout <<keypoints_frame.size() << endl;
+    imshow("Image with all keypoints", first_image_frame_keypoints);
+    waitKey(0);
     
     // GET MATCHES
     vector<vector<DMatch>> allgood_matches;
     Ptr<BFMatcher> matcher = BFMatcher::create(NORM_L2, true);
-    for (int i = 0; i < list_descriptors_dataset.size()-1; i ++) {
+    vector<vector<int>> mask_all;
+    vector<vector<KeyPoint>> allgood_keypoints;
+
+    for (int i = 0; i < list_descriptors_dataset.size(); i ++) {
+        
+        // Set different color for each object
+        if (i==0){
+            color = Scalar(255,0,0);
+        }
+        if (i==1){
+            color = Scalar(0,255,0);
+        }
+        if (i==2){
+            color = Scalar(0,0,255);
+        }
+        if (i==3){
+            color = Scalar(0,255,255);
+        }
         
         // Get all matches of first frame and dataset img
         vector<DMatch> matches;
-        matcher->match(list_descriptors_dataset.at(i), descriptors_frame, matches);
+        matcher->match(list_descriptors_dataset.at(i), descriptors_frame, matches);     // Matches contains all matches
     
         // Get minimum distance between descriptors
         double min_distance = 200;
@@ -65,6 +121,7 @@ void Tracker::match(vector<vector<KeyPoint>> &list_keypoints_dataset, vector<Mat
             }
         }
         
+        
         // Refine matches
         vector<DMatch> good_matches;
         for (int j = 0; j < matches.size(); j++) {
@@ -74,42 +131,82 @@ void Tracker::match(vector<vector<KeyPoint>> &list_keypoints_dataset, vector<Mat
                 good_matches.push_back(matches.at(j));
             }
         }
-        allgood_matches.push_back(good_matches);
         
-    }
-}
-vector<vector<KeyPoint>> Tracker::a(vector<vector<DMatch>> allgood_matches, vector<vector<KeyPoint>> list_keypoints_dataset, vector<KeyPoint> keypoints_frame) {
-    
-    // Find valid matches (RANSAC)
-    vector<vector<int>> mask_all;
-    vector<vector<Point2f>> src_vec, dst_vec;
-    for (int i = 0; i < allgood_matches.size(); i++) {
-        vector<Point2f> src,dst;
+        // Visualize the matches
+        vector<Mat> img_matches(list_descriptors_dataset);
+        drawMatches(images_dataset.at(i), list_keypoints_dataset.at(i), images_frame.at(0), keypoints_frame, good_matches, img_matches.at(i), Scalar::all(-1), Scalar::all(-1), std::vector<char>(), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
+        imshow("Image matches of object number "+to_string(i), img_matches.at(i));
+        waitKey(0);
+        
+        //allgood_matches.push_back(good_matches);
+        
+        vector<Point2f> obj,scene;
+        vector<KeyPoint> keypoints_dataset;
+        vector<KeyPoint> keypoints_frame_good;
+        
         vector<int> mask; // mask will contain 0 if the match is wrong
-        for (int j = 0; j < allgood_matches.at(i).size(); j++) {
+        for (int j = 0; j < good_matches.size(); j++) {
             
             // Good matches between the dataset image and first framed img
-            src.push_back(list_keypoints_dataset.at(i).at(allgood_matches.at(i).at(j).queryIdx).pt);
+            obj.push_back(list_keypoints_dataset.at(i).at(good_matches.at(j).queryIdx).pt);
+            keypoints_dataset.push_back(list_keypoints_dataset.at(i).at(good_matches.at(j).queryIdx));
+            
             // Good matches in the second image (2 consecutive images are considered)
-            dst.push_back(keypoints_frame.at(allgood_matches.at(i).at(j).trainIdx).pt);
+            scene.push_back(keypoints_frame.at(good_matches.at(j).trainIdx).pt);
+            keypoints_frame_good.push_back(keypoints_frame.at(good_matches.at(j).trainIdx));
         }
-        src_vec.push_back(src);
-        dst_vec.push_back(dst);
-        findHomography(src, dst, mask, RANSAC);
-        mask_all.push_back(mask);
-    }
+        
+        // Show the keypoints figured out in the first frame considering matches
+        Mat second_image_frame_keypoints = images_frame.at(0).clone();
+        drawKeypoints(images_frame.at(0), keypoints_frame_good, second_image_frame_keypoints, color);
+        cout <<"Good keypoints considering matches "<<keypoints_frame_good.size() << endl;
     
-    vector<vector<KeyPoint>> allgood_keypoints;
-    for (int i=0; i<mask_all.size(); i++) {
+        imshow("Image with all good keypoints", second_image_frame_keypoints);
+        waitKey(0);
+
+        Mat H = findHomography(obj, scene, mask, RANSAC);
+        
+        vector<Point2f> obj_corners(4);
+        
+        obj_corners[0] = Point2f(0, 0);
+        obj_corners[1] = Point2f((float)images_dataset.at(i).cols, 0);
+        obj_corners[2] = Point2f((float)images_dataset.at(i).cols, (float)images_dataset.at(i).rows);
+        obj_corners[3] = Point2f(0, (float)images_dataset.at(i).rows);
+        vector<Point2f> scene_corners(4);
+        
+        cout << "That's OK" << endl;
+        
+        perspectiveTransform(obj_corners, scene_corners, H);
+        
+        line( img_matches.at(i), scene_corners[0] + Point2f((float)images_dataset.at(i).cols, 0),
+              scene_corners[1] + Point2f((float)images_dataset.at(i).cols, 0), Scalar(0, 255, 0), 4 );
+        line( img_matches.at(i), scene_corners[1] + Point2f((float)images_dataset.at(i).cols, 0),
+              scene_corners[2] + Point2f((float)images_dataset.at(i).cols, 0), Scalar( 0, 255, 0), 4 );
+        line( img_matches.at(i), scene_corners[2] + Point2f((float)images_dataset.at(i).cols, 0),
+              scene_corners[3] + Point2f((float)images_dataset.at(i).cols, 0), Scalar( 0, 255, 0), 4 );
+        line( img_matches.at(i), scene_corners[3] + Point2f((float)images_dataset.at(i).cols, 0),
+              scene_corners[0] + Point2f((float)images_dataset.at(i).cols, 0), Scalar( 0, 255, 0), 4 );
+
+        imshow("Good Matches & Object detection of image "+to_string(i), img_matches.at(i));
+        waitKey(0);
         
         vector<KeyPoint> good_keypoints;
-        for (int j=0; j<mask_all.at(i).size(); j++) {
-            
-            if (mask_all.at(i).at(j) != 0) {
-                
-                good_keypoints.push_back();
+        for (int j=0; j<mask.size(); j++) {
+    
+            if (mask.at(j) != 0) {
+    
+                good_keypoints.push_back(keypoints_frame.at(good_matches.at(j).trainIdx));
             }
-            
         }
+        allgood_keypoints.push_back(good_keypoints);
+        
+        /*Mat third_image_frame_keypoints = images_frame.at(0).clone();
+        drawKeypoints(images_frame.at(0), good_keypoints, third_image_frame_keypoints, color);
+        cout <<"Final keypoints "<<good_keypoints.size()<<endl;
+        imshow("Image with final keypoints", third_image_frame_keypoints);
+        waitKey(0);*/
+        
     }
+    
 }
+

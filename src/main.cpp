@@ -6,7 +6,7 @@ using namespace cv;
 
 int main(int argc, const char * argv[]) {
 
-    String path = "/Users/gioel/Documents/Control\ System\ Engineering/Computer\ Vision/Lab_6/data/video.mov";
+    String path = "../data/video.mov";
     // vector of frames
     vector<Mat> frames;
     VideoCapture cap(path);
@@ -28,15 +28,19 @@ int main(int argc, const char * argv[]) {
     }
 
     // Load dataset and video frames
-    String dataset_path = "/Users/gioel/Documents/Control\ System\ Engineering/Computer\ Vision/Lab_6/data/objects/*.png";
+    String dataset_path = "../data/objects/*.png";
+    
+    // Create track object of class tracker
     Tracker track(frames, dataset_path);
 
+    // Initialization of required variables
     vector<vector<KeyPoint>> list_keypoints_dataset;
     vector<Mat> list_descriptors_dataset;
     vector<KeyPoint> keypoints_frame;
     Mat descriptors_frame;
-    track.match(list_keypoints_dataset, list_descriptors_dataset, keypoints_frame, descriptors_frame, 3);
+    double ratio = 3;
     
-    
-    return 0;
+    track.match(list_keypoints_dataset, list_descriptors_dataset, keypoints_frame, descriptors_frame, ratio);
+ 
+     return 0;
 }
