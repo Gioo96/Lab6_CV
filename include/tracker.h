@@ -19,7 +19,7 @@ public:
     Tracking(vector<Mat> images_f, String dataset_path);
     
     // Match objects
-    vector<vector<KeyPoint>> match(vector<vector<KeyPoint>> &list_keypoints_dataset, vector<Mat> &list_descriptors_dataset, vector<KeyPoint> &keypoints_frame, Mat &descriptors_frame, double ratio);
+    vector<vector<KeyPoint>> getGoodKeypoints(vector<vector<KeyPoint>> &list_keypoints_dataset, vector<Mat> &list_descriptors_dataset, vector<KeyPoint> &keypoints_frame, Mat &descriptors_frame, double ratio);
     
     // adsada
     vector<vector<KeyPoint>> visualize_matches(vector<vector<DMatch>> allgood_matches, vector<vector<KeyPoint>> list_keypoints_dataset, vector<KeyPoint> keypoints_frame);

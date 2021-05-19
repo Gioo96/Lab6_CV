@@ -26,7 +26,7 @@ Tracking::Tracking(vector<Mat> images_f, String dataset_path) {
     }
 }
 
-vector<vector<KeyPoint>> Tracking::match(vector<vector<KeyPoint>> &list_keypoints_dataset, vector<Mat> &list_descriptors_dataset, vector<KeyPoint> &keypoints_frame, Mat &descriptors_frame, double ratio) {
+vector<vector<KeyPoint>> Tracking::getGoodKeypoints(vector<vector<KeyPoint>> &list_keypoints_dataset, vector<Mat> &list_descriptors_dataset, vector<KeyPoint> &keypoints_frame, Mat &descriptors_frame, double ratio) {
     
     // COMPUTE KEYPOINTS & DESCRIPTORS
     Ptr<SIFT> sift = SIFT::create();
@@ -44,8 +44,7 @@ vector<vector<KeyPoint>> Tracking::match(vector<vector<KeyPoint>> &list_keypoint
     // Keypoints & descriptors of the first video frame
     sift->detectAndCompute(images_frame.at(0), Mat(), keypoints_frame, descriptors_frame);
     
-    // GET MATCHES
-    vector<vector<DMatch>> allgood_matches;
+    // GET GOOD KEYPOINTS
     vector<vector<KeyPoint>> allgood_keypoints;
     Ptr<BFMatcher> matcher = BFMatcher::create(NORM_L2, true);
     for (int i = 0; i < images_dataset.size(); i ++) {
@@ -74,8 +73,9 @@ vector<vector<KeyPoint>> Tracking::match(vector<vector<KeyPoint>> &list_keypoint
                 refined_matches.push_back(matches.at(j));
             }
         }
+        cout<<refined_matches.size()<<endl;
         
-        // Find valid matches (RANSAC)
+        // Good matches (RANSAC)
         vector<Point2f> src,dst;
         vector<int> mask; // mask will contain 0 if the match is wrong
         for (int j = 0; j < refined_matches.size(); j++) {
@@ -84,25 +84,33 @@ vector<vector<KeyPoint>> Tracking::match(vector<vector<KeyPoint>> &list_keypoint
             src.push_back(keypoints_frame.at(refined_matches.at(j).queryIdx).pt);
             dst.push_back(list_keypoints_dataset.at(i).at(refined_matches.at(j).trainIdx).pt);
         }
-        findHomography(src, dst, mask, RANSAC);
-    
-        vector<KeyPoint> good_keypoints;
+        
+        try {
+            findHomography(src, dst, mask, RANSAC);
+            if (refined_matches.size() < 4) {
+                throw "Not enough matches have been found!";
+            }
+        }
+        catch (const char* msg) {
+            
+            cout<<msg<<endl;
+        }
+
         vector<DMatch> good_matches;
         for (int j=0; j<mask.size(); j++) {
     
             if (mask.at(j) != 0) {
     
-                //good_keypoints.push_back(keypoints_frame.at(refined_matches.at(j).trainIdx));
                 good_matches.push_back(refined_matches.at(j));
             }
         }
-
-        // Visualize good matches
-        Mat out;
-        drawMatches(images_frame.at(0), keypoints_frame, images_dataset.at(i), list_keypoints_dataset.at(i), good_matches, out, Scalar::all(-1),
-                    Scalar::all(-1), std::vector<char>(), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
-        imshow("Good matches", out);
-        waitKey(0);
+        
+        // Good keypoints
+        vector<KeyPoint> good_keypoints;
+        for (int j=0; j<good_matches.size(); j++) {
+    
+            good_keypoints.push_back(keypoints_frame.at(good_matches.at(j).queryIdx));
+        }
         
         allgood_keypoints.push_back(good_keypoints);
         
