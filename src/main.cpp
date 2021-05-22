@@ -1,12 +1,19 @@
-#include "tracker.cpp"
-
+#include "tracking.cpp"
 
 using namespace std;
 using namespace cv;
 
+// Function's declaration
+void onMouse(int event, int x, int y, int flags, void* param);
+vector<Point2f> sort_corners(vector<Point2f> corners, int cols, int rows);
+
+// Global variables
+vector<Point2f> object_corners;
+int num_corners = 0;
+
 int main(int argc, const char * argv[]) {
 
-    String path = "/Users/gioel/Documents/Control\ System\ Engineering/Computer\ Vision/Lab_6/data/video.mov";
+    String path = "/Users/gioel/Documents/Control System Engineering/Computer Vision/Lab_6/data/video.mov";
     // vector of frames
     vector<Mat> frames;
     VideoCapture cap(path);
@@ -32,14 +39,111 @@ int main(int argc, const char * argv[]) {
     String dataset_path = "/Users/gioel/Documents/Control System Engineering/Computer Vision/Lab_6/data/objects/*.png";
     Tracking track(frames, dataset_path);
     
+    // Visualize good keypoints
     vector<vector<KeyPoint>> list_keypoints_dataset;
     vector<Mat> list_descriptors_dataset;
     vector<KeyPoint> keypoints_frame;
     Mat descriptors_frame;
     vector<Mat> H;
-    track.visualizeGoodKeypoints(list_keypoints_dataset, list_descriptors_dataset, keypoints_frame, descriptors_frame, H);
     
-    track.drawRect(H);
+    vector<vector<Point2f>> allcoords_keypoints;
+    allcoords_keypoints = track.visualizeGoodKeypoints(list_keypoints_dataset, list_descriptors_dataset, keypoints_frame, descriptors_frame, H);
+    
+    // Get corners of each object in the images of the dataset
+    vector<vector<Point2f>> tot_corners;
+    for (int i=0; i<track.images_dataset.size(); i++) {
+        
+        String window_name = "Object n." + to_string(i+1);
+        namedWindow(window_name);
+        Mat* image = &track.images_dataset.at(i);
+        imshow(window_name, *image);
+        setMouseCallback(window_name, onMouse, static_cast<void*>(image));
+        waitKey(0);
+
+        // Sort corners
+        vector<Point2f> corners_sorted;
+        corners_sorted = sort_corners(object_corners, track.images_dataset.at(i).cols, track.images_dataset.at(i).rows);
+        
+        tot_corners.push_back(corners_sorted);
+        
+    }
+
+    track.drawRect(H, tot_corners);
+    track.trackObjects(allcoords_keypoints);
+    
+    
 
     return 0;
 }
+
+
+void onMouse(int event, int x, int y, int flags, void* userdata) {
+    
+    if (event != EVENT_LBUTTONDOWN) {
+   
+        return;
+    }
+    else {
+        
+        if (num_corners == 4) {
+    
+            vector<Point2f> init;
+            object_corners = init;
+            num_corners = 0;
+        }
+        
+        Point2f corner(x,y);
+        object_corners.push_back(corner);
+        num_corners ++;
+        
+        cout<<"Corner n." + to_string(num_corners) + ":"<<corner<<endl;
+        
+        if (num_corners == 4) {
+            
+            cout<<"Press a key"<<endl;
+        }
+    }
+}
+
+vector<Point2f> sort_corners(vector<Point2f> corners, int cols, int rows) {
+    
+    vector<Point2f> corners_sorted;
+    vector<int> j; // j will contain the index of corners to be add at the end of corners_sorted
+    int i = 0;
+    
+    // Find not correct corners index
+    while (i < corners.size()-1) {
+        
+        if (abs(corners.at(i).x - corners.at(i+1).x) > cols/2 && abs(corners.at(i).y - corners.at(i+1).y) > rows/2) {
+            j.push_back(i+1);
+        }
+        i ++;
+    }
+
+    // If the index of a corner is correct then add the corner to corners_sorted
+    for (i=0; i<corners.size(); i++) {
+        
+        bool found = false;
+        for (int k=0; k<j.size(); k++) {
+            
+            if (i == j.at(k)) {
+                
+                found = true;
+            }
+        }
+        if (!found) {
+            
+            corners_sorted.push_back(corners.at(i));
+        }
+    }
+    
+    // Add all the remaining corners at the end of corners_sorted
+    for (i=0; i<j.size(); i++) {
+        
+        corners_sorted.push_back(corners.at(j.at(i)));
+    }
+    
+    return corners_sorted;
+}
+
+
