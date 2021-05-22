@@ -2,26 +2,32 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/xfeatures2d.hpp>
+#include <opencv2/calib3d.hpp>
+#include <opencv2/video/tracking.hpp>
 #include <iostream>
+
 
 using namespace cv;
 using namespace std;
 
 // PanoramicImage Class
-class Tracker{
+class Tracking{
 
 // Methods
 
 public:
 
     // Constructor
-    Tracker(vector<Mat> images_f, String dataset_path);
+    Tracking(vector<Mat> images_f, String dataset_path);
     
-    // Match objects
-    void match(vector<vector<KeyPoint>> &list_keypoints_dataset, vector<Mat> &list_descriptors_dataset, vector<KeyPoint> &keypoints_frame, Mat &descriptors_frame, double ratio);
+    // Visualize good keypoints
+    vector<vector<Point2f>> visualizeGoodKeypoints(vector<vector<KeyPoint>> &list_keypoints_dataset, vector<Mat> &list_descriptors_dataset, vector<KeyPoint> &keypoints_frame, Mat &descriptors_frame, vector<Mat> &H, Mat &img_keypoints);
     
-    // adsada
-    vector<vector<KeyPoint>> a(vector<vector<DMatch>> allgood_matches, vector<vector<KeyPoint>> all_keypoints);
+    // Draw the rectangle
+    void drawRect(vector<Mat> H, Mat img_keypoints);
+    
+    //Track the objects
+    void trackObjects(vector<vector<Point2f>> allcoords_keypoints);
 
 // Data
 
