@@ -6,10 +6,11 @@
 #include <opencv2/video/tracking.hpp>
 #include <iostream>
 
+
 using namespace cv;
 using namespace std;
 
-// Tracking Class
+// PanoramicImage Class
 class Tracking{
 
 // Methods
@@ -20,12 +21,13 @@ public:
     Tracking(vector<Mat> images_f, String dataset_path);
     
     // Visualize good keypoints
-    vector<vector<Point2f>> visualizeGoodKeypoints(vector<vector<KeyPoint>> &list_keypoints_dataset, vector<Mat> &list_descriptors_dataset, vector<KeyPoint> &keypoints_frame, Mat &descriptors_frame, vector<Mat> &H);
+    vector<vector<Point2f>> visualizeGoodKeypoints(vector<Mat> &H, Mat &img_keypoints);
     
     // Draw the rectangle
-    void drawRect(vector<Mat> H, vector<vector<Point2f>> tot_corners);
+    void drawRect(vector<Mat> H, Mat &img, vector<vector<Point2f>> &corners, int flag);
     
-    void trackObjects(vector<vector<Point2f>> allcoords_keypoints);
+    //Track the objects
+    void trackObjects(vector<vector<Point2f>> allActual_corners, vector<vector<Point2f>> allActual_keypoints);
 
 // Data
 
@@ -36,5 +38,4 @@ public:
     
     // Vector of images of given dataset
     vector<Mat> images_dataset;
-    
 };
