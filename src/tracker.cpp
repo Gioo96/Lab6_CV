@@ -142,22 +142,23 @@ vector<vector<Point2f>> Tracking::visualizeGoodKeypoints(vector<vector<KeyPoint>
     return allcoords_keypoints;
 }
 
-void Tracking::drawRect(vector<Mat> H, Mat img_keypoints) {
+vector<vector<Point2f>> Tracking::drawRect(vector<Mat> H, Mat img_keypoints, vector<vector<Point2f>> vec_corners) {
  
     // Corners of each image of the dataset
-    vector<Point2f> obj_corners(4);
+//    vector<Point2f> obj_corners(4);
     
-    obj_corners[0] = Point2f(0, 0);
-    obj_corners[1] = Point2f(static_cast<float>(images_dataset.at(0).cols), 0);
-    obj_corners[2] = Point2f(static_cast<float>(images_dataset.at(0).cols), static_cast<float>(images_dataset.at(0).rows));
-    obj_corners[3] = Point2f(0, static_cast<float>(images_dataset.at(0).rows));
+//    obj_corners[0] = Point2f(0, 0);
+//    obj_corners[1] = Point2f(static_cast<float>(images_dataset.at(0).cols), 0);
+//    obj_corners[2] = Point2f(static_cast<float>(images_dataset.at(0).cols), static_cast<float>(images_dataset.at(0).rows));
+//    obj_corners[3] = Point2f(0, static_cast<float>(images_dataset.at(0).rows));
          
     vector<Scalar> color = {Scalar(0,0,255), Scalar(255,0,0), Scalar(0,255,0), Scalar(50,50,50)};
-    for (int i=0; i<H.size(); i++) {
+    vector<vector<Point2f>> all_scene_corners;
+    for (int i = 0; i < H.size(); i++) {
     
         // Compute corrispondent pixel in frame image
         vector<Point2f> scene_corners(4);
-        perspectiveTransform(obj_corners, scene_corners, H.at(i));
+        perspectiveTransform(vec_corners.at(i), scene_corners, H.at(i));
     
         // Draw lines
         line(img_keypoints, scene_corners[0], scene_corners[1], color.at(i), 3);
@@ -166,12 +167,15 @@ void Tracking::drawRect(vector<Mat> H, Mat img_keypoints) {
         line(img_keypoints, scene_corners[3], scene_corners[0], color.at(i), 3);
         //imshow("Object detection n. " + to_string(i+1), images_frame.at(0));
         //waitKey(0);
+        all_scene_corners.push_back(scene_corners);
     }
-    imshow("Object detection on first frame", img_keypoints);
-    waitKey(0);
+    imshow("Object detection", img_keypoints);
+    waitKey(1);
+    
+    return all_scene_corners;
 }
 
-void Tracking::trackObjects(vector<vector<Point2f>> allcoords_keypoints){
+void Tracking::trackObjects(vector<vector<Point2f>> allcoords_keypoints, vector<vector<Point2f>> vec_corners){
     int size_video = images_frame.size();
     vector<Mat> final_frame(images_frame.size());
     vector<Scalar> color = {Scalar(0,0,255), Scalar(255,0,0), Scalar(0,255,0), Scalar(50,50,50)};
@@ -200,32 +204,34 @@ void Tracking::trackObjects(vector<vector<Point2f>> allcoords_keypoints){
         images_frame.at(i).copyTo(image);
         cvtColor(image, gray, COLOR_BGR2GRAY);
      
-        
         vector<vector<Point2f>> allNextPoints;
+        vector<Mat> H;
         
         for (int j = 0; j < images_dataset.size(); j++){
             
             vector<Point2f> nextPoints;
             
             cornerSubPix(first_image_gray, allPrevPoints.at(j), Size(win_size, win_size), Size(-1,-1), termcrit);
-            calcOpticalFlowPyrLK(first_image_gray, gray, allPrevPoints.at(j), nextPoints, status, err, Size( win_size*2+1, win_size*2+1 ), 5, termcrit);
+            calcOpticalFlowPyrLK(first_image_gray, gray, allPrevPoints.at(j), nextPoints, status, err, Size( win_size+1, win_size+1 ), 2, termcrit);
             
             allNextPoints.push_back(nextPoints);
-        
+            
+            //Draw rect
+            Mat H_single;
+            
+            vector<int> mask;
+            
+            
+            H_single = findHomography(allcoords_keypoints.at(j), allPrevPoints.at(j));
+            H.push_back(H_single);
+            
             for (int k = 0; k < allPrevPoints.at(j).size(); k++){
                 
-                //circle(first_image_gray, (allPrevPoints.at(j)).at(k), 3, color.at(j));
                 circle(image, (allNextPoints.at(j)).at(k), 3, color.at(j));
             }
-            
-            for (int h = 0; h < allPrevPoints.at(j).size(); h++){
-                
-                if (!status[h]){
-                    
-                    allPrevPoints.at(j)[h] = allNextPoints.at(j)[h];
-                }
-            }
         }
+        
+        drawRect(H, image, vec_corners);
         
         first_image_gray = gray;
         

@@ -24,14 +24,14 @@ public:
     vector<vector<Point2f>> visualizeGoodKeypoints(vector<vector<KeyPoint>> &list_keypoints_dataset, vector<Mat> &list_descriptors_dataset, vector<KeyPoint> &keypoints_frame, Mat &descriptors_frame, vector<Mat> &H, Mat &img_keypoints);
     
     // Draw the rectangle
-    void drawRect(vector<Mat> H, Mat img_keypoints);
+    vector<vector<Point2f>> drawRect(vector<Mat> H, Mat img_keypoints, vector<vector<Point2f>> tot_corners);
     
     //Track the objects
-    void trackObjects(vector<vector<Point2f>> allcoords_keypoints);
+    void trackObjects(vector<vector<Point2f>> allcoords_keypoints, vector<vector<Point2f>> vec_corners);
 
 // Data
 
-protected:
+public:
 
     // Vector of images of the given video
     vector<Mat> images_frame;
