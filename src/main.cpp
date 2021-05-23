@@ -15,13 +15,13 @@ int num_corners = 0;
 int main(int argc, const char * argv[]) {
 
     // Provide 2 arguments
-//    if (argc < 2) {
-//
-//            perror("Please provide data");
-//            return -1;
-//    }
+    if (argc != 3) { // Also spaces are included
+
+            perror("Please provide valid data");
+            return -1;
+    }
     
-    String path = "/Users/gioel/Documents/Control\ System\ Engineering/Computer\ Vision/Lab_6/data/video.mov";
+    String path = argv[1];
     
     // vector of frames
     vector<Mat> frames;
@@ -45,7 +45,7 @@ int main(int argc, const char * argv[]) {
     }
 
     // Load dataset and video frames
-    String dataset_path = "/Users/gioel/Documents/Control\ System\ Engineering/Computer\ Vision/Lab_6/data/objects/*.png";
+    String dataset_path = argv[2];
     Tracking track(frames, dataset_path);
 
     vector<Mat> H;

@@ -8,13 +8,12 @@ using namespace std;
 Tracking::Tracking(vector<Mat> images_f, String dataset_path) {
 
     images_frame = images_f;
-        
+    dataset_path = dataset_path + "/*.png";
     vector<String> fn;
     glob(dataset_path, fn, false);
     if (!fn.size()) {
         
         cout<<"Error loading the dataset"<<endl;
-        return;
     }
     else {
         
